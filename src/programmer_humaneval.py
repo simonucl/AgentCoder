@@ -4,13 +4,16 @@ import json
 from tqdm import tqdm
 import copy
 import openai
+from openai import OpenAI
+
+client = OpenAI(api_key='YOUR API KEY')
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
 from datasets import load_dataset
 # Setting API parameters
-openai.api_base = "https://api.aiohub.org/v1"
-openai.api_key = 'YOUR API KEY'
+# TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(base_url="https://api.aiohub.org/v1")'
+# openai.api_base = "https://api.aiohub.org/v1"
 
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
@@ -46,16 +49,14 @@ def fetch_completion(data_entry, model,lg,times = 5):
     for i in range(times):
         while True:
             try:
-                completions = openai.ChatCompletion.create(
-                    model=model,
-                    stream=False,
-                    messages=[
-                {"role": "system", "content": "You are a software programmer."},
-                {"role": "user", "content":text},
-                    ],
-                    request_timeout=100,
-                )
-                completion = completions.choices[0]["message"]["content"]
+                completions = client.chat.completions.create(model=model,
+                stream=False,
+                messages=[
+                                {"role": "system", "content": "You are a software programmer."},
+                                {"role": "user", "content":text},
+                ],
+                request_timeout=100)
+                completion = completions.choices[0].message.content
                 completion = preprocess_data(completion)
 
             except Exception as e:

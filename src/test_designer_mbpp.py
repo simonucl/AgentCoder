@@ -3,13 +3,14 @@ import os
 import json
 from tqdm import tqdm
 import copy
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key='API_KEY')
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
 from datasets import load_dataset
 # Setting API parameters
-openai.api_key = 'API_KEY'
 
 dataset = load_dataset("evalplus/mbppplus",split="test")
 dataset = [entry for entry in dataset]
@@ -47,16 +48,14 @@ def fetch_completion(data_entry, model, lg,times=5):
     for i in range(times):
         while True:
             try:
-                completions = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo-1106",
-                    stream=False,
-                    messages=[
-                {"role": "system", "content": "You are a code developer assistant."},
-                {"role": "user", "content":text},
-                    ],
-                    request_timeout=100,
-                )
-                test_case = completions.choices[0]["message"]["content"]
+                completions = client.chat.completions.create(model="gpt-3.5-turbo-1106",
+                stream=False,
+                messages=[
+                                {"role": "system", "content": "You are a code developer assistant."},
+                                {"role": "user", "content":text},
+                ],
+                request_timeout=100)
+                test_case = completions.choices[0].message.content
                 test_case = preprocess_data(test_case)
             except Exception as e:
                 time.sleep(20)

@@ -4,12 +4,15 @@ import json
 from tqdm import tqdm
 import copy
 import openai
+from openai import OpenAI
+
+client = OpenAI(api_key='API_KEY')
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 
 # Setting API parameters
-openai.api_base = "https://api.aiohub.org/v1"
-openai.api_key = 'API_KEY'
+# TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(base_url="https://api.aiohub.org/v1")'
+# openai.api_base = "https://api.aiohub.org/v1"
 
 prompt_path = "../prompts/mbpp_prompt_update.txt"
 with open(prompt_path, "r") as f:
@@ -48,16 +51,14 @@ Your code should pass these tests:
 ```
 """
     try:
-        completions = openai.ChatCompletion.create(
-            model = model,
-            stream=False,
-            messages=[
-        {"role": "system", "content": "You are a code developer."},
-        {"role": "user", "content":text},
-            ],
-            request_timeout=100,
-        )
-        data_entry["completion"] = completions.choices[0]["message"]["content"]
+        completions = client.chat.completions.create(model = model,
+        stream=False,
+        messages=[
+                {"role": "system", "content": "You are a code developer."},
+                {"role": "user", "content":text},
+        ],
+        request_timeout=100)
+        data_entry["completion"] = completions.choices[0].message.content
         data_entry = preprocess_data(data_entry,lg)
         return data_entry
     except Exception as e:
@@ -76,16 +77,14 @@ def fix_bug(data_entry, model,lg,preprocess_data = preprocess_data):
             f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
         )
         try:
-            completions = openai.ChatCompletion.create(
-                model = model,
-                stream=False,
-                messages=[
-            {"role": "system", "content": "You are a code developer assistant."},
-            {"role": "user", "content":gpt_prompt},
-                ],
-                request_timeout=100,
-            )
-            data_entry["completion"] = completions.choices[0]["message"]["content"]
+            completions = client.chat.completions.create(model = model,
+            stream=False,
+            messages=[
+                        {"role": "system", "content": "You are a code developer assistant."},
+                        {"role": "user", "content":gpt_prompt},
+            ],
+            request_timeout=100)
+            data_entry["completion"] = completions.choices[0].message.content
             data_entry = preprocess_data(data_entry,"py")
         except Exception as e:
             print(repr(e))
