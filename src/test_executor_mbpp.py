@@ -17,7 +17,7 @@ import multiprocessing
 import platform
 import signal
 from tqdm import tqdm
-from programmer_mbpp import fix_bug,call_fix_bug,call_completion,single_agent_helper
+from programmer_mbpp import call_completion
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     for model_name in model_list:
         for lg in language:
-            path = f"./dataset/zero_shot_{model_name}_mbpp.json"
+            path = f"../dataset/{model_name}_mbpp_temp.json"
             with open(path, "r") as f:
                 dataset = json.load(f)
             epoch = 5
@@ -166,9 +166,9 @@ if __name__ == "__main__":
                 test_report(dataset,lg)
                 test_agent(dataset,lg)
                 dataset = call_completion(dataset,model_name,lg)
-                with open(f"./dataset/zero_shot_{model_name}_{current_epoch}_mbpp.json", "w") as f:
+                with open(f"../dataset/{model_name}_{current_epoch}_mbpp.json", "w") as f:
                     json.dump(dataset, f, indent=4)
-            with open(f"./dataset/zero_shot_{model_name}_{current_epoch}_mbpp_total.json", "w") as f:
+            with open(f"../dataset/{model_name}_{current_epoch}_mbpp_total.json", "w") as f:
                 json.dump(dataset, f, indent=4)
 
 

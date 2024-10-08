@@ -4,8 +4,9 @@ import json
 from tqdm import tqdm
 import copy
 from openai import OpenAI
+from constant_value import API_KEY, MBPP_PATH
 
-client = OpenAI(api_key='API_KEY')
+client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
@@ -17,7 +18,7 @@ dataset = [entry for entry in dataset]
 task_0_tests = "\n".join(dataset[0]["test_list"])
 task_1_tests = "\n".join(dataset[1]["test_list"])
 
-prompt_path = "./prompts/test_designer_mbpp_prompt_update.txt"
+prompt_path = "../prompts/test_designer_mbpp_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
@@ -48,13 +49,13 @@ def fetch_completion(data_entry, model, lg,times=5):
     for i in range(times):
         while True:
             try:
-                completions = client.chat.completions.create(model="gpt-3.5-turbo-1106",
+                completions = client.chat.completions.create(model=model,
                 stream=False,
                 messages=[
                                 {"role": "system", "content": "You are a code developer assistant."},
                                 {"role": "user", "content":text},
                 ],
-                request_timeout=100)
+                timeout=100)
                 test_case = completions.choices[0].message.content
                 test_case = preprocess_data(test_case)
             except Exception as e:
@@ -83,12 +84,12 @@ def call_fetch_test_completion_helper(dataset, model,lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-0301"]
+    model_list = ["gpt-3.5-turbo-1106"]
     language = ["python"]
     for model in model_list:
         for lg in language:
             from datasets import load_dataset
-            with open(f"./dataset/{model}_mbpp.json", "r") as f:
+            with open(MBPP_PATH, "r") as f:
                 dataset = json.load(f)
             dataset = [entry for entry in dataset]
             with ThreadPoolExecutor(max_workers=5) as executor:
@@ -102,5 +103,6 @@ if __name__ == "__main__":
                     except Exception as e:
                         print(repr(e))
 
-            with open(f"./dataset/{model}_mbpp.json", "w") as f:
+            MBPP_PATH_WITH_SUFFIX = MBPP_PATH.replace(".json", "_test.json")
+            with open(MBPP_PATH_WITH_SUFFIX, "w") as f:
                 json.dump(dataset, f, indent=4)

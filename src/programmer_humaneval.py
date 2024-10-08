@@ -5,8 +5,9 @@ from tqdm import tqdm
 import copy
 import openai
 from openai import OpenAI
+from constant_value import API_KEY
 
-client = OpenAI(api_key='YOUR API KEY')
+client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
@@ -23,6 +24,7 @@ with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
 def preprocess_data(completion_string):
+    # print(completion_string)
     if f"```python" in completion_string:
         completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
         completion_string = completion_string[:completion_string.find("```")]
@@ -55,7 +57,7 @@ def fetch_completion(data_entry, model,lg,times = 5):
                                 {"role": "system", "content": "You are a software programmer."},
                                 {"role": "user", "content":text},
                 ],
-                request_timeout=100)
+                timeout=100)
                 completion = completions.choices[0].message.content
                 completion = preprocess_data(completion)
 
@@ -102,5 +104,6 @@ if __name__ == "__main__":
                         dataset[idx] = updated_entry
                     except Exception as e:
                         print(repr(e))
-            with open(f"./dataset/{model}_{lg}.json", "w") as f:
+            # with open(f"./dataset/{model}_{lg}.json", "w") as f:
+            with open(f"../dataset/{model}.json", "w") as f:
                 json.dump(dataset, f, indent=4)

@@ -20,7 +20,7 @@ import concurrent.futures
 from tqdm import tqdm
 from tqdm import tqdm
 from programmer_humaneval import call_fetch_completion_helper
-from test_designer import call_fetch_test_completion_helper
+from test_designer_humaneval import call_fetch_test_completion_helper
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
@@ -246,7 +246,8 @@ if __name__ == "__main__":
     language = ["python"]
     for model in model_list:
         for lg in language:
-            path = f"./dataset/{model}_{lg}.json"
+            # path = f"./dataset/{model}_{lg}.json"
+            path = f"../dataset/{model}.json"
             with open(path, "r") as f:
                 dataset = json.load(f)
             epoch = 5
@@ -255,7 +256,7 @@ if __name__ == "__main__":
                 test_report(dataset,lg)
                 dataset = call_fetch_completion_helper(dataset,model,lg)
                 dataset = call_fetch_test_completion_helper(dataset,model,lg)
-                with open(f"./dataset/{model}_{current_epoch}.json", "w") as f:
+                with open(f"../dataset/{model}_{current_epoch}.json", "w") as f:
                     json.dump(dataset, f, indent=4)
             dataset = test_agent_concurrency(dataset,lg)
             test_report(dataset,lg)

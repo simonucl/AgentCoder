@@ -4,8 +4,9 @@ import json
 from tqdm import tqdm
 import copy
 from openai import OpenAI
+from constant_value import API_KEY
 
-client = OpenAI(api_key='API_KEY')
+client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
@@ -15,7 +16,7 @@ from datasets import load_dataset
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
 
-prompt_path = "./prompts/test_designer_humaneval_prompt_update.txt"
+prompt_path = "../prompts/test_designer_humaneval_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
@@ -52,7 +53,7 @@ def fetch_completion(data_entry, model, lg,times=10):
                                 {"role": "system", "content": "You are a code developer assistant."},
                                 {"role": "user", "content":text},
                 ],
-                request_timeout=100)
+                timeout=100)
                 test_case = completions.choices[0].message.content
                 test_case = preprocess_data(test_case)
             except Exception as e:
@@ -86,7 +87,8 @@ if __name__ == "__main__":
     for model in model_list:
         for lg in language:
             from datasets import load_dataset
-            with open(f"./dataset/{model}_{lg}.json", "r") as f:
+            # with open(f"./dataset/{model}_{lg}.json", "r") as f:
+            with open(f"../dataset/{model}.json", "r") as f:
                 dataset = json.load(f)
             dataset = [entry for entry in dataset]
             with ThreadPoolExecutor(max_workers=5) as executor:
@@ -100,5 +102,6 @@ if __name__ == "__main__":
                     except Exception as e:
                         print(repr(e))
 
-            with open(f"./dataset/{model}_{lg}.json", "w") as f:
+            # with open(f"./dataset/{model}_{lg}.json", "w") as f:
+            with open(f"../dataset/{model}.json", "w") as f:
                 json.dump(dataset, f, indent=4)
