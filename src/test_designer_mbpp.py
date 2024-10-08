@@ -4,7 +4,7 @@ import json
 from tqdm import tqdm
 import copy
 from openai import OpenAI
-from constant_value import API_KEY, MBPP_PATH
+from constant_value import API_KEY, MBPP_PATH, MBPP_PATH_WITH_SUFFIX
 
 client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
@@ -103,6 +103,5 @@ if __name__ == "__main__":
                     except Exception as e:
                         print(repr(e))
 
-            MBPP_PATH_WITH_SUFFIX = MBPP_PATH.replace(".json", "_test.json")
             with open(MBPP_PATH_WITH_SUFFIX, "w") as f:
                 json.dump(dataset, f, indent=4)

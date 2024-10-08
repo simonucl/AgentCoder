@@ -21,6 +21,8 @@ from programmer_mbpp import call_completion
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
+from constant_value import MBPP_PATH, MBPP_PATH_WITH_SUFFIX
+
 correct_doctest = 0
 correct_before_doctest = 0
 correct_after_doctest = 0
@@ -36,7 +38,7 @@ idx_run_tests_fuzzer_canonical_solution = []
 language = ["python","cpp","js","go","js"]
 
 
-def process_humaneval_test(sample, problems, example_test=False,language=language, test_case=True,canonical_solution=False):
+def process_test(sample, problems, example_test=False, language=language, test_case=True, canonical_solution=False):
     task_id = sample["task_id"]
     task_id = problems.index(sample)
     prompt = sample["prompt"]
@@ -127,7 +129,7 @@ def time_limit(seconds: float):
 def test_report(dataset,lg):
     correct = 0
     for i in tqdm(range(len(dataset))):
-        dataset[i]["full_code"] = process_humaneval_test(dataset[i], dataset, example_test=False,language=lg,test_case=False)
+        dataset[i]["full_code"] = process_test(dataset[i], dataset, example_test=False, language=lg, test_case=False)
         result = check_correctness(dataset[i]["task_id"],dataset[i],lg,5,"./tmp")
         if result["passed"]==True:
             correct+=1
@@ -141,7 +143,7 @@ def test_report(dataset,lg):
 def test_agent(dataset,lg):
     correct = 0
     for i in tqdm(range(len(dataset))):
-        dataset[i]["full_code"] = process_humaneval_test(dataset[i], dataset, example_test=False,language=lg,test_case=False)
+        dataset[i]["full_code"] = process_test(dataset[i], dataset, example_test=False, language=lg, test_case=False)
         result = check_correctness(dataset[i]["task_id"],dataset[i],lg,5,"./tmp")
         if result["passed"]==True:
             correct+=1
@@ -157,7 +159,7 @@ if __name__ == "__main__":
 
     for model_name in model_list:
         for lg in language:
-            path = f"../dataset/{model_name}_mbpp_temp.json"
+            path = MBPP_PATH_WITH_SUFFIX
             with open(path, "r") as f:
                 dataset = json.load(f)
             epoch = 5
@@ -166,9 +168,12 @@ if __name__ == "__main__":
                 test_report(dataset,lg)
                 test_agent(dataset,lg)
                 dataset = call_completion(dataset,model_name,lg)
-                with open(f"../dataset/{model_name}_{current_epoch}_mbpp.json", "w") as f:
+                epoch_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json", f"{current_epoch}_mbpp_temp01.json")
+                total_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json",
+                                                           f"{current_epoch}_mbpp_temp01_total.json")
+                with open(epoch_path, "w") as f:
                     json.dump(dataset, f, indent=4)
-            with open(f"../dataset/{model_name}_{current_epoch}_mbpp_total.json", "w") as f:
+            with open(total_path, "w") as f:
                 json.dump(dataset, f, indent=4)
 
 
