@@ -15,9 +15,9 @@ wait_for_server() {
     done' && return 0 || return 1
 }
 
-python3 -m vllm.entrypoints.openai.api_server --model $MODEL_PATH --dtype auto --api-key token-abc123 --port 8000 --tensor-parallel-size $NUM_GPUS > vllm.log 2>&1 &
+# python3 -m vllm.entrypoints.openai.api_server --model $MODEL_PATH --dtype auto --api-key token-abc123 --port 8000 --tensor-parallel-size $NUM_GPUS > vllm.log 2>&1 &
 
-# python3 -m sglang.launch_server --model-path $MODEL_PATH --api-key token-abc123 --port 8000 --dp $NUM_GPUS > sglang.log 2>&1 &
+python3 -m sglang.launch_server --model-path $MODEL_PATH --api-key token-abc123 --port 8000 --dp $NUM_GPUS > sglang.log 2>&1 &
 
 # Wait for the server to be ready
 if ! wait_for_server; then
@@ -30,6 +30,6 @@ fi
 
 python3 src/programmer_humaneval.py --model $MODEL_PATH --language python --base_url http://0.0.0.0:8000/v1 --api_key token-abc123
 
-pkill -f sglang
-pkill -f multiprocessing
-pkill -f vllm
+# pkill -f sglang
+# pkill -f multiprocessing
+# pkill -f vllm

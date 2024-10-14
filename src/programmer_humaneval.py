@@ -109,20 +109,20 @@ if __name__ == "__main__":
     dataset = [entry for entry in dataset]
     with ThreadPoolExecutor(max_workers=5) as executor:
         future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
-    for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-        entry = future_to_entry[future]
-        try:
-            updated_entry = future.result()
-            if updated_entry is not None:
-                idx = dataset.index(entry)
-                dataset[idx] = updated_entry
-            else:
-                print(f"Warning: fetch_completion returned None for entry: {entry}")
-        except TypeError as e:
-            print(f"TypeError occurred: {repr(e)}")
-            print(f"Entry causing the error: {entry}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {repr(e)}")
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset)):
+            entry = future_to_entry[future]
+            try:
+                updated_entry = future.result()
+                if updated_entry is not None:
+                    idx = dataset.index(entry)
+                    dataset[idx] = updated_entry
+                else:
+                    print(f"Warning: fetch_completion returned None for entry: {entry}")
+            except TypeError as e:
+                print(f"TypeError occurred: {repr(e)}")
+                print(f"Entry causing the error: {entry}")
+            except Exception as e:
+                print(f"An unexpected error occurred: {repr(e)}")
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-    with open(f"dataset/{model}.json", "w") as f:
+    with open(f"dataset/{model.replace('/', '__')}.json", "w") as f:
         json.dump(dataset, f, indent=4)
