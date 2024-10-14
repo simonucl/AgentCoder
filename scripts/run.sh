@@ -29,7 +29,8 @@ echo "VLLM server started successfully for $MODEL_NAME"
 fi
 
 python3 src/programmer_humaneval.py --model $MODEL_PATH --language python --base_url http://0.0.0.0:8000/v1 --api_key token-abc123
-
+python3 src/test_designer_humaneval.py --model $MODEL_PATH --language python --base_url http://0.0.0.0:8000/v1 --api_key token-abc123
+python3 src/test_executor_humaneval.py --model $MODEL_PATH --language python --base_url http://0.0.0.0:8000/v1 --api_key token-abc123
 # pkill -f sglang
 # pkill -f multiprocessing
 # pkill -f vllm

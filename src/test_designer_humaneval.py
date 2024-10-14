@@ -17,7 +17,7 @@ from constant_value import parse_args
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
 
-prompt_path = "../prompts/test_designer_humaneval_prompt_update.txt"
+prompt_path = "prompts/test_designer_humaneval_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         api_dict = None
     from datasets import load_dataset
     # with open(f"./dataset/{model}_{lg}.json", "r") as f:
-    with open(f"../dataset/{model}.json", "r") as f:
+    with open(f"dataset/{model.replace('/', '__')}.json", "r") as f:
         dataset = json.load(f)
     dataset = [entry for entry in dataset]
     with ThreadPoolExecutor(max_workers=5) as executor:
@@ -109,5 +109,5 @@ if __name__ == "__main__":
                 print(repr(e))
 
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-    with open(f"../dataset/{model}.json", "w") as f:
+    with open(f"dataset/{model.replace('/', '__')}.json", "w") as f:
         json.dump(dataset, f, indent=4)

@@ -253,7 +253,7 @@ if __name__ == "__main__":
     else:
         api_dict = None
     # path = f"./dataset/{model}_{lg}.json"
-    path = f"../dataset/{model}.json"
+    path = f"dataset/{model.replace('/', '__')}.json"
     with open(path, "r") as f:
         dataset = json.load(f)
     epoch = 5
@@ -262,7 +262,7 @@ if __name__ == "__main__":
         test_report(dataset,lg)
         dataset = call_fetch_completion_helper(dataset,model,lg)
         dataset = call_fetch_test_completion_helper(dataset,model,lg)
-        with open(f"../dataset/{model}_{current_epoch}.json", "w") as f:
+        with open(f"dataset/{model.replace('/', '__')}_{current_epoch}.json", "w") as f:
             json.dump(dataset, f, indent=4)
     dataset = test_agent_concurrency(dataset,lg)
     test_report(dataset,lg)
