@@ -5,9 +5,10 @@ from tqdm import tqdm
 import copy
 import openai
 from openai import OpenAI
-from constant_value import API_KEY
+from constant_value import API_KEY, parse_args
+import argparse
 
-client = OpenAI(api_key=API_KEY)
+# client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
@@ -33,7 +34,7 @@ def preprocess_data(completion_string):
     return completion_string
 
 # Function to fetch completion
-def fetch_completion(data_entry, model,lg,times = 5):
+def fetch_completion(data_entry, model,lg,times = 5, api_dict=None):
     global construct_few_shot_prompt
     if "need_reproduce" in data_entry.keys() and data_entry["need_reproduce"]==False:
         return data_entry
@@ -48,6 +49,15 @@ def fetch_completion(data_entry, model,lg,times = 5):
 ## Completion 3:
 """
     completions_code = []
+    if api_dict:
+        client = OpenAI(
+            base_url=api_dict['base_url'],
+            api_key=api_dict['api_key']
+        )
+    else:
+        client = OpenAI(
+            api_key=API_KEY
+        )
     for i in range(times):
         while True:
             try:
@@ -87,23 +97,28 @@ def call_fetch_completion_helper(dataset, model,lg):
     return dataset
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-    for model in model_list:
-        for lg in language:
-            from datasets import load_dataset
-            dataset = load_dataset("openai_humaneval",split="test")
-            dataset = [entry for entry in dataset]
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
-                for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-                    entry = future_to_entry[future]
-                    try:
-                        updated_entry = future.result()
-                        idx = dataset.index(entry)
-                        dataset[idx] = updated_entry
-                    except Exception as e:
-                        print(repr(e))
-            # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-            with open(f"../dataset/{model}.json", "w") as f:
-                json.dump(dataset, f, indent=4)
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    from datasets import load_dataset
+    dataset = load_dataset("openai_humaneval",split="test")
+    dataset = [entry for entry in dataset]
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+            entry = future_to_entry[future]
+            try:
+                updated_entry = future.result()
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            except Exception as e:
+                print(repr(e))
+    # with open(f"./dataset/{model}_{lg}.json", "w") as f:
+    with open(f"../dataset/{model}.json", "w") as f:
+        json.dump(dataset, f, indent=4)

@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
 from datasets import load_dataset
+from constant_value import parse_args
 # Setting API parameters
 
 dataset = load_dataset("openai_humaneval",split="test")
@@ -82,26 +83,31 @@ def call_fetch_test_completion_helper(dataset, model,lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-    for model in model_list:
-        for lg in language:
-            from datasets import load_dataset
-            # with open(f"./dataset/{model}_{lg}.json", "r") as f:
-            with open(f"../dataset/{model}.json", "r") as f:
-                dataset = json.load(f)
-            dataset = [entry for entry in dataset]
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
-                for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-                    entry = future_to_entry[future]
-                    try:
-                        updated_entry = future.result()
-                        idx = dataset.index(entry)
-                        dataset[idx] = updated_entry
-                    except Exception as e:
-                        print(repr(e))
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    from datasets import load_dataset
+    # with open(f"./dataset/{model}_{lg}.json", "r") as f:
+    with open(f"../dataset/{model}.json", "r") as f:
+        dataset = json.load(f)
+    dataset = [entry for entry in dataset]
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+            entry = future_to_entry[future]
+            try:
+                updated_entry = future.result()
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            except Exception as e:
+                print(repr(e))
 
-            # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-            with open(f"../dataset/{model}.json", "w") as f:
-                json.dump(dataset, f, indent=4)
+    # with open(f"./dataset/{model}_{lg}.json", "w") as f:
+    with open(f"../dataset/{model}.json", "w") as f:
+        json.dump(dataset, f, indent=4)

@@ -5,7 +5,7 @@ from tqdm import tqdm
 import copy
 import openai
 from openai import OpenAI
-from constant_value import API_KEY, MBPP_PATH
+from constant_value import API_KEY, MBPP_PATH, parse_args
 
 client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
@@ -122,33 +122,38 @@ def call_completion(dataset, model,lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-    for model in model_list:
-        for lg in language:
-            from datasets import load_dataset
-            dataset = load_dataset("mbpp",name="sanitized",split="test")
-            dataset = [entry for entry in dataset]
-            # with open(path, "r") as f:
-            #     dataset = json.load(f)
-            with ThreadPoolExecutor(max_workers=20) as executor:
-                future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in dataset}
-                # data_entry = fetch_completion(copy.deepcopy(dataset[0]), model, lg)
-                # print(data_entry)
-                # print(data_entry)
-                # future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(dataset[0]), model, lg)}
-                # print(type(future_to_entry))
-                for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-                    # print(type(future_to_entry))
-                    entry = future_to_entry[future]
-                    # print(entry)
-                    try:
-                        updated_entry = future.result()
-                        # print(updated_entry)
-                        idx = dataset.index(entry)
-                        dataset[idx] = updated_entry
-                    except Exception as e:
-                        print(repr(e))
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    from datasets import load_dataset
+    dataset = load_dataset("mbpp",name="sanitized",split="test")
+    dataset = [entry for entry in dataset]
+    # with open(path, "r") as f:
+    #     dataset = json.load(f)
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in dataset}
+        # data_entry = fetch_completion(copy.deepcopy(dataset[0]), model, lg)
+        # print(data_entry)
+        # print(data_entry)
+        # future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(dataset[0]), model, lg)}
+        # print(type(future_to_entry))
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+            # print(type(future_to_entry))
+            entry = future_to_entry[future]
+            # print(entry)
+            try:
+                updated_entry = future.result()
+                # print(updated_entry)
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            except Exception as e:
+                print(repr(e))
 
-            with open(MBPP_PATH, "w") as f:
-                json.dump(dataset, f, indent=4)
+    with open(MBPP_PATH, "w") as f:
+        json.dump(dataset, f, indent=4)

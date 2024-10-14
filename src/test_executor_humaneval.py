@@ -24,6 +24,7 @@ from test_designer_humaneval import call_fetch_test_completion_helper
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
+from constant_value import parse_args
 correct_doctest = 0
 correct_before_doctest = 0
 correct_after_doctest = 0
@@ -242,21 +243,26 @@ def test_agent_concurrency(dataset, lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-    for model in model_list:
-        for lg in language:
-            # path = f"./dataset/{model}_{lg}.json"
-            path = f"../dataset/{model}.json"
-            with open(path, "r") as f:
-                dataset = json.load(f)
-            epoch = 5
-            for current_epoch in range(epoch):
-                dataset = test_agent_concurrency(dataset,lg)
-                test_report(dataset,lg)
-                dataset = call_fetch_completion_helper(dataset,model,lg)
-                dataset = call_fetch_test_completion_helper(dataset,model,lg)
-                with open(f"../dataset/{model}_{current_epoch}.json", "w") as f:
-                    json.dump(dataset, f, indent=4)
-            dataset = test_agent_concurrency(dataset,lg)
-            test_report(dataset,lg)
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    # path = f"./dataset/{model}_{lg}.json"
+    path = f"../dataset/{model}.json"
+    with open(path, "r") as f:
+        dataset = json.load(f)
+    epoch = 5
+    for current_epoch in range(epoch):
+        dataset = test_agent_concurrency(dataset,lg)
+        test_report(dataset,lg)
+        dataset = call_fetch_completion_helper(dataset,model,lg)
+        dataset = call_fetch_test_completion_helper(dataset,model,lg)
+        with open(f"../dataset/{model}_{current_epoch}.json", "w") as f:
+            json.dump(dataset, f, indent=4)
+    dataset = test_agent_concurrency(dataset,lg)
+    test_report(dataset,lg)

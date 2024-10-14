@@ -22,7 +22,7 @@ from programmer_mbpp import call_completion
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
-from constant_value import MBPP_PATH, MBPP_PATH_WITH_SUFFIX
+from constant_value import MBPP_PATH, MBPP_PATH_WITH_SUFFIX, parse_args
 
 correct_doctest = 0
 correct_before_doctest = 0
@@ -159,24 +159,28 @@ def test_agent(dataset, lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-
-    for model_name in model_list:
-        for lg in language:
-            path = MBPP_PATH_WITH_SUFFIX
-            with open(path, "r") as f:
-                dataset = json.load(f)
-            epoch = 5
-            for current_epoch in range(epoch):
-                print(lg, current_epoch)
-                test_report(dataset, lg)
-                # test_agent(dataset, lg)
-                dataset = call_completion(dataset, model_name, lg)
-                epoch_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json", f"{current_epoch}_mbpp_temp01.json")
-                total_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json",
-                                                           f"{current_epoch}_mbpp_temp01_total.json")
-                with open(epoch_path, "w") as f:
-                    json.dump(dataset, f, indent=4)
-            with open(total_path, "w") as f:
-                json.dump(dataset, f, indent=4)
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    path = MBPP_PATH_WITH_SUFFIX
+    with open(path, "r") as f:
+        dataset = json.load(f)
+    epoch = 5
+    for current_epoch in range(epoch):
+        print(lg, current_epoch)
+        test_report(dataset, lg)
+        # test_agent(dataset, lg)
+        dataset = call_completion(dataset, model_name, lg)
+        epoch_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json", f"{current_epoch}_mbpp_temp01.json")
+        total_path = MBPP_PATH_WITH_SUFFIX.replace("mbpp_temp01.json",
+                                                    f"{current_epoch}_mbpp_temp01_total.json")
+        with open(epoch_path, "w") as f:
+            json.dump(dataset, f, indent=4)
+    with open(total_path, "w") as f:
+        json.dump(dataset, f, indent=4)

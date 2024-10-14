@@ -4,7 +4,7 @@ import json
 from tqdm import tqdm
 import copy
 from openai import OpenAI
-from constant_value import API_KEY, MBPP_PATH, MBPP_PATH_WITH_SUFFIX
+from constant_value import API_KEY, MBPP_PATH, MBPP_PATH_WITH_SUFFIX, parse_args
 
 client = OpenAI(api_key=API_KEY)
 from concurrent.futures import ThreadPoolExecutor
@@ -84,24 +84,29 @@ def call_fetch_test_completion_helper(dataset, model,lg):
 
 
 if __name__ == "__main__":
-    model_list = ["gpt-3.5-turbo-1106"]
-    language = ["python"]
-    for model in model_list:
-        for lg in language:
-            from datasets import load_dataset
-            with open(MBPP_PATH, "r") as f:
+    args = parse_args()
+    model = args.model
+    lg = args.language
+    base_url = args.base_url
+    api_key = args.api_key
+    if base_url and api_key:
+        api_dict = {"base_url": base_url, "api_key": api_key}
+    else:
+        api_dict = None
+    from datasets import load_dataset
+    with open(MBPP_PATH, "r") as f:
                 dataset = json.load(f)
-            dataset = [entry for entry in dataset]
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
-                for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-                    entry = future_to_entry[future]
-                    try:
-                        updated_entry = future.result()
-                        idx = dataset.index(entry)
-                        dataset[idx] = updated_entry
-                    except Exception as e:
-                        print(repr(e))
+    dataset = [entry for entry in dataset]
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+            entry = future_to_entry[future]
+            try:
+                updated_entry = future.result()
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            except Exception as e:
+                print(repr(e))
 
-            with open(MBPP_PATH_WITH_SUFFIX, "w") as f:
-                json.dump(dataset, f, indent=4)
+    with open(MBPP_PATH_WITH_SUFFIX, "w") as f:
+        json.dump(dataset, f, indent=4)
