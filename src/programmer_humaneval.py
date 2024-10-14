@@ -111,14 +111,14 @@ if __name__ == "__main__":
     dataset = [entry for entry in dataset]
     with ThreadPoolExecutor(max_workers=5) as executor:
         future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict): entry for entry in tqdm(dataset)}
-        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
-            entry = future_to_entry[future]
-            try:
-                updated_entry = future.result()
-                idx = dataset.index(entry)
-                dataset[idx] = updated_entry
-            except Exception as e:
-                print(repr(e))
+    for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+        entry = future_to_entry[future]
+        try:
+            updated_entry = future.result()
+            idx = dataset.index(entry)
+            dataset[idx] = updated_entry
+        except Exception as e:
+            print(repr(e))
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
     with open(f"dataset/{model}.json", "w") as f:
         json.dump(dataset, f, indent=4)
