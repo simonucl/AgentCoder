@@ -15,7 +15,7 @@ import concurrent.futures
 # TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(base_url="https://api.aiohub.org/v1")'
 # openai.api_base = "https://api.aiohub.org/v1"
 
-prompt_path = "../prompts/mbpp_prompt_update.txt"
+prompt_path = "prompts/mbpp_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 

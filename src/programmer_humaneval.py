@@ -20,7 +20,7 @@ from datasets import load_dataset
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
 
-prompt_path = "../prompts/humaneval_prompt_update.txt"
+prompt_path = "prompts/humaneval_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
@@ -120,5 +120,5 @@ if __name__ == "__main__":
             except Exception as e:
                 print(repr(e))
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-    with open(f"../dataset/{model}.json", "w") as f:
+    with open(f"dataset/{model}.json", "w") as f:
         json.dump(dataset, f, indent=4)
