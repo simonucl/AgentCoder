@@ -62,12 +62,10 @@ def fetch_completion(data_entry, model,lg,times = 5, api_dict=None):
         while True:
             try:
                 completions = client.chat.completions.create(model=model,
-                stream=False,
                 messages=[
                                 {"role": "system", "content": "You are a software programmer."},
                                 {"role": "user", "content":text},
-                ],
-                timeout=100)
+                ])
                 completion = completions.choices[0].message.content
                 completion = preprocess_data(completion)
 
