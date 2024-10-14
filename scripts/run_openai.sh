@@ -27,6 +27,8 @@ NUM_GPUS=4
 # fi
 
 python3 src/programmer_humaneval.py --model $MODEL_PATH --language python
+python3 src/test_designer_humaneval.py --model $MODEL_PATH --language python
+python3 src/test_executor_humaneval.py --model $MODEL_PATH --language python
 
 # pkill -f sglang
 # pkill -f multiprocessing
