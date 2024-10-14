@@ -115,10 +115,16 @@ if __name__ == "__main__":
         entry = future_to_entry[future]
         try:
             updated_entry = future.result()
-            idx = dataset.index(entry)
-            dataset[idx] = updated_entry
+            if updated_entry is not None:
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            else:
+                print(f"Warning: fetch_completion returned None for entry: {entry}")
+        except TypeError as e:
+            print(f"TypeError occurred: {repr(e)}")
+            print(f"Entry causing the error: {entry}")
         except Exception as e:
-            print(repr(e))
+            print(f"An unexpected error occurred: {repr(e)}")
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
     with open(f"dataset/{model}.json", "w") as f:
         json.dump(dataset, f, indent=4)
