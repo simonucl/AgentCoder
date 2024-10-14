@@ -110,7 +110,7 @@ if __name__ == "__main__":
     dataset = load_dataset("openai_humaneval",split="test")
     dataset = [entry for entry in dataset]
     with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict): entry for entry in tqdm(dataset)}
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
     for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
         entry = future_to_entry[future]
         try:
