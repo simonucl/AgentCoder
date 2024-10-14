@@ -209,6 +209,7 @@ def test_agent_concurrency(dataset, lg):
                 if f"assert {dataset[i]['entry_point']}(" not in test_case_list[k]:
                     continue
                 dataset[i]["full_code"] = test_setup + "\n" + completion_list[j] + "\n" + test_case_list[k]
+                dataset[i]["completion"] = completion_list[j]
                 result = check_correctness(dataset[i]["task_id"], dataset[i], lg, 3, "./tmp")
                 if result["passed"]:
                     correct += 1
