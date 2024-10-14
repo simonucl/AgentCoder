@@ -29,7 +29,7 @@ def preprocess_data(test_case_string):
     return test_case_string
 
 # Function to fetch completion
-def fetch_completion(data_entry, model, lg,times=10):
+def fetch_completion(data_entry, model, lg,times=10, api_dict=None):
     global construct_few_shot_prompt
     if "need_reproduce" in data_entry.keys() and data_entry["need_reproduce"]==False:
         return data_entry
@@ -45,10 +45,15 @@ def fetch_completion(data_entry, model, lg,times=10):
 ```
 """
     test_case_list = []
+    if api_dict:
+        client = OpenAI(api_key=api_dict["api_key"], base_url=api_dict["base_url"])
+    else:
+        client = OpenAI(api_key=API_KEY)
+
     for i in range(times):
         while True:
             try:
-                completions = client.chat.completions.create(model="gpt-3.5-turbo-1106",
+                completions = client.chat.completions.create(model=model,
                 stream=False,
                 messages=[
                                 {"role": "system", "content": "You are a code developer assistant."},
@@ -67,11 +72,11 @@ def fetch_completion(data_entry, model, lg,times=10):
     data_entry["test_case_list"] = test_case_list
     return data_entry
 
-def call_fetch_test_completion_helper(dataset, model,lg):
+def call_fetch_test_completion_helper(dataset, model,lg, api_dict=None):
     print("Fixing bug...")
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
-        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+    with ThreadPoolExecutor(max_workers=32) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset)):
             entry = future_to_entry[future]
             try:
                 updated_entry = future.result()
@@ -97,8 +102,8 @@ if __name__ == "__main__":
     with open(f"dataset/{model.replace('/', '__')}.json", "r") as f:
         dataset = json.load(f)
     dataset = [entry for entry in dataset]
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
+    with ThreadPoolExecutor(max_workers=32) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
         for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
             entry = future_to_entry[future]
             try:

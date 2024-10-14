@@ -80,11 +80,11 @@ def fetch_completion(data_entry, model,lg,times = 5, api_dict=None):
     return data_entry
 
 
-def call_fetch_completion_helper(dataset, model,lg):
+def call_fetch_completion_helper(dataset, model,lg, api_dict=None):
     print("Fixing bug...")
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg): entry for entry in tqdm(dataset)}
-        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+    with ThreadPoolExecutor(max_workers=32) as executor:
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset)):
             entry = future_to_entry[future]
             try:
                 updated_entry = future.result()
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     from datasets import load_dataset
     dataset = load_dataset("openai_humaneval",split="test")
     dataset = [entry for entry in dataset]
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=32) as executor:
         future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
         for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset)):
             entry = future_to_entry[future]

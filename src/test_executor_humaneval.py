@@ -260,8 +260,8 @@ if __name__ == "__main__":
     for current_epoch in range(epoch):
         dataset = test_agent_concurrency(dataset,lg)
         test_report(dataset,lg)
-        dataset = call_fetch_completion_helper(dataset,model,lg)
-        dataset = call_fetch_test_completion_helper(dataset,model,lg)
+        dataset = call_fetch_completion_helper(dataset,model,lg, api_dict=api_dict)
+        dataset = call_fetch_test_completion_helper(dataset,model,lg, api_dict=api_dict)
         with open(f"dataset/{model.replace('/', '__')}_{current_epoch}.json", "w") as f:
             json.dump(dataset, f, indent=4)
     dataset = test_agent_concurrency(dataset,lg)
