@@ -4,6 +4,7 @@
 
 MODEL_PATH="gpt-4o-mini"
 NUM_GPUS=4
+EXP_NAME="gpt-4o"
 
 # wait_for_server() {
 #   # wait for vllm server to start
@@ -26,9 +27,19 @@ NUM_GPUS=4
 # echo "VLLM server started successfully for $MODEL_NAME"
 # fi
 
-python3 src/programmer_humaneval.py --model $MODEL_PATH --language python
-python3 src/test_designer_humaneval.py --model $MODEL_PATH --language python
-python3 src/test_executor_humaneval.py --model $MODEL_PATH --language python
+python3 src/programmer_humaneval.py \
+    --model $MODEL_PATH \
+    --language python \
+    --exp_name $EXP_NAME
+
+python3 src/test_designer_humaneval.py \
+    --model $MODEL_PATH \
+    --language python \
+    --exp_name $EXP_NAME
+python3 src/test_executor_humaneval.py \
+    --model $MODEL_PATH \
+    --language python \
+    --exp_name $EXP_NAME
 
 # pkill -f sglang
 # pkill -f multiprocessing
