@@ -24,7 +24,7 @@ from test_designer_humaneval import call_fetch_test_completion_helper
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
-from constant_value import parse_args
+from constant_value import API_KEY, parse_args
 import openai
 import copy
 correct_doctest = 0
@@ -194,7 +194,7 @@ def fix_bug(data_entry, model,lg, api_dict=None):
         gpt_prompt = (
             "Please re-completion the code to fix the error message. "+
             f"\nHere is the previous version:\n```{lg}\n" + 
-            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry["test_case"]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
+            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry["test_case_list"][0]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
             f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
         )
         if api_dict:
@@ -203,7 +203,7 @@ def fix_bug(data_entry, model,lg, api_dict=None):
                 api_key=api_dict['api_key']
             )
         else:
-            client = openai.OpenAI()
+            client = openai.OpenAI(api_key=API_KEY)
         try:
             completions = client.chat.completions.create(
                 model = model,
@@ -245,7 +245,7 @@ def test_agent_concurrency(dataset, lg):
         completion_list = dataset[i]["completion_list"]
         test_case_list = dataset[i]["test_case_list"]
         correct_list = []
-
+        result_list = []
         for j in range(len(completion_list)):
             correct = 0
             if f"def {dataset[i]['entry_point']}" not in completion_list[j]:
@@ -260,30 +260,33 @@ def test_agent_concurrency(dataset, lg):
                 # print(f"result: {result}")
                 if result["passed"]:
                     correct += 1
+            result_list.append(result['result'])
             correct_list.append(correct)
 
         max_correct = max(correct_list)
         idx = correct_list.index(max_correct)
+        result = result_list[idx]
         # print(f"max_correct: {max_correct}, idx: {idx}")
-        return max_correct, idx
+        return max_correct, idx, result
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [executor.submit(process_item, i) for i in range(len(dataset))]
 
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset)):
-            max_correct, idx = future.result()
-            if max_correct >= 3: # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
+            max_correct, idx, result = future.result()
+            if max_correct >= 6: # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
                 dataset[i]["need_reproduce"] = False
                 dataset[i]["idx"] = idx
                 dataset[i]["max_correct"] = max_correct
+                dataset[i]["result"] = result
                 _for_completion += 1
             else:
                 # print(f"max_correct: {max_correct}, idx: {idx}")
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
-
+                dataset[i]["result"] = result
     # TODO: fix why both are zero
     print("==============Start Agent Testing==============")
     print(f"test_report: {(total_correct/len(dataset)*100):.1f}")

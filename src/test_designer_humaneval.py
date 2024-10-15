@@ -29,7 +29,7 @@ def preprocess_data(test_case_string):
     return test_case_string
 
 # Function to fetch completion
-def fetch_completion(data_entry, model, lg,times=10, api_dict=None):
+def fetch_completion(data_entry, model, lg,times=1, api_dict=None):
     global construct_few_shot_prompt
     if "need_reproduce" in data_entry.keys() and data_entry["need_reproduce"]==False:
         return data_entry
