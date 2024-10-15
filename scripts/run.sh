@@ -2,9 +2,9 @@
 # python test_designer_[humaneval/mbpp].py
 # python test_executor_[humaneval/mbpp].py
 
-MODEL_PATH="meta-llama/Meta-Llama-3-8B-Instruct"
+MODEL_PATH="meta-llama/Meta-Llama-3-70B-Instruct"
 NUM_GPUS=1
-EXP_NAME="gen-llama-3-8b-test-gpt-4o-mini"
+EXP_NAME="gen-llama-3-70b-sample-5-times"
 wait_for_server() {
   # wait for vllm server to start
   # return 1 if vllm server crashes
@@ -33,7 +33,8 @@ python3 src/programmer_humaneval.py \
   --language python \
   --base_url http://0.0.0.0:8000/v1 \
   --api_key token-abc123 \
-  --exp_name $EXP_NAME
+  --exp_name $EXP_NAME \
+  --times 5
 
 python3 src/test_designer_humaneval.py \
   --model gpt-4o-mini \
@@ -45,8 +46,9 @@ python3 src/test_executor_humaneval.py \
   --language python \
   --base_url http://0.0.0.0:8000/v1 \
   --api_key token-abc123 \
-  --exp_name $EXP_NAME
-
+  --exp_name $EXP_NAME \
+  --times 5
+  
 # pkill -f sglang
 # pkill -f multiprocessing
 # pkill -f vllm

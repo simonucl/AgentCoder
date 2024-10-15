@@ -195,43 +195,48 @@ def test_report(dataset,lg):
     print("==============Start Report Testing==============")
     print(f"test_report: {(correct/len(dataset)*100):.1f}")
 
-def fix_bug(data_entry, model,lg, api_dict=None):
+def fix_bug(data_entry, model,lg, times, api_dict=None):
     if "need_reproduce" in data_entry.keys() and data_entry["need_reproduce"]==False:
         return data_entry
     else:
-        gpt_prompt = (
-            "Please re-completion the code to fix the error message. "+
-            f"\nHere is the previous version:\n```{lg}\n" + 
-            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry['test_case_list'][0]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
-            f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
-        )
-        if api_dict:
-            client = openai.OpenAI(
-                base_url=api_dict['base_url'],
-                api_key=api_dict['api_key']
+        completion_list = []
+        for i in range(times):
+            gpt_prompt = (
+                "Please re-completion the code to fix the error message. "+
+                f"\nHere is the previous version:\n```{lg}\n" + 
+                data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry['test_case_list'][0]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
+                f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
             )
-        else:
-            client = openai.OpenAI(api_key=API_KEY)
-        try:
-            completions = client.chat.completions.create(
-                model = model,
-                messages=[
-            {"role": "system", "content": "You are a code developer assistant."},
-            {"role": "user", "content":gpt_prompt},
-                ],
-            )
-            completion = completions.choices[0].message.content
-            completion = preprocess_data(completion)
-        except Exception as e:
-            print(repr(e))
-    data_entry["completion_list"].append(completion)
+            if api_dict:
+                client = openai.OpenAI(
+                    base_url=api_dict['base_url'],
+                    api_key=api_dict['api_key']
+                )
+            else:
+                client = openai.OpenAI(api_key=API_KEY)
+            try:
+                completions = client.chat.completions.create(
+                    model = model,
+                    messages=[
+                {"role": "system", "content": "You are a code developer assistant."},
+                {"role": "user", "content":gpt_prompt},
+                    ],
+                    temperature=0.8,
+                    top_p=0.95,
+                )
+                completion = completions.choices[0].message.content
+                completion = preprocess_data(completion)
+                completion_list.append(completion)
+            except Exception as e:
+                print(repr(e))
+    data_entry["completion_list"] = completion_list
     return data_entry
 
-def call_fix_bug(dataset, model,lg, api_dict=None):
+def call_fix_bug(dataset, model,lg, times, api_dict=None):
     print("Fixing bug...")
     with ThreadPoolExecutor() as executor:
-        future_to_entry = {executor.submit(fix_bug, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
-        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+        future_to_entry = {executor.submit(fix_bug, copy.deepcopy(entry), model, lg, times, api_dict=api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset), desc="Fixing bug"):
             entry = future_to_entry[future]
             try:
                 updated_entry = future.result()
@@ -285,7 +290,7 @@ def test_agent_concurrency(dataset, lg):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [executor.submit(process_item, i) for i in range(len(dataset))]
 
-        for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset)):
+        for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset), desc="Testing completions"):
             max_correct, idx, result = future.result()
             i = futures.index(future)
             if max_correct >= np.ceil(len(dataset[i]["test_case_list"]) * 0.6): # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
@@ -314,6 +319,7 @@ if __name__ == "__main__":
     base_url = args.base_url
     api_key = args.api_key
     exp_name = args.exp_name
+    times = args.times
     if base_url and api_key:
         api_dict = {"base_url": base_url, "api_key": api_key}
     else:
@@ -330,6 +336,6 @@ if __name__ == "__main__":
         # dataset = call_fetch_test_completion_helper(dataset,model,lg, api_dict=api_dict)
         with open(f"dataset/{exp_name}_{current_epoch}.json", "w") as f:
             json.dump(dataset, f, indent=4)
-        dataset = call_fix_bug(dataset,model,lg, api_dict=api_dict)
+        dataset = call_fix_bug(dataset,model,lg, times, api_dict=api_dict)
     dataset = test_agent_concurrency(dataset,lg)
     test_report(dataset,lg)

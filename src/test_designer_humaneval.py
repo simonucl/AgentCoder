@@ -57,13 +57,15 @@ def fetch_completion(data_entry, model, lg,times=1, api_dict=None):
     for i in range(times):
         while True:
             try:
-                completions = client.chat.completions.create(model=model,
+                completions = client.chat.completions.create(
+                    model=model,
                 stream=False,
                 messages=[
                                 {"role": "system", "content": "You are a code developer assistant."},
                                 {"role": "user", "content":text},
                 ],
-                timeout=100)
+                timeout=100,
+                temperature=0)
                 test_case = completions.choices[0].message.content
                 test_case = preprocess_data(test_case)
             except Exception as e:
@@ -98,6 +100,7 @@ if __name__ == "__main__":
     base_url = args.base_url
     api_key = args.api_key
     exp_name = args.exp_name
+    times = args.times
     if base_url and api_key:
         api_dict = {"base_url": base_url, "api_key": api_key}
     else:
@@ -108,8 +111,8 @@ if __name__ == "__main__":
         dataset = json.load(f)
     dataset = [entry for entry in dataset]
     with ThreadPoolExecutor(max_workers=32) as executor:
-        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
-        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+        future_to_entry = {executor.submit(fetch_completion, copy.deepcopy(entry), model, lg, times, api_dict=api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry), total=len(dataset), desc="Generating test cases"):
             entry = future_to_entry[future]
             try:
                 updated_entry = future.result()

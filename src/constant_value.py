@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--api_key", type=str, default=None)
     parser.add_argument("--exp_name", type=str, required=True)
+    parser.add_argument("--times", type=int, default=1)
     return parser.parse_args()
 
 def preprocess_data(test_case_string):
