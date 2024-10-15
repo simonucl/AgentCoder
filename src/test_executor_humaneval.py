@@ -24,7 +24,7 @@ from test_designer_humaneval import call_fetch_test_completion_helper
 from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
-from constant_value import API_KEY, parse_args
+from constant_value import API_KEY, parse_args, preprocess_data
 import openai
 import copy
 import numpy as np
@@ -172,14 +172,14 @@ def process_humaneval_test(sample, problems, example_test=False,language=languag
 #     if "assert" in task["prompt"]:
 #         task["prompt"] = task["prompt"][:task["prompt"].find("assert")]
 #     return task
-def preprocess_data(completion_string):
-    # print(completion_string)
-    if f"```python" in completion_string:
-        completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
-        completion_string = completion_string[:completion_string.find("```")]
-    else:
-        print("Error: No code block found")
-    return completion_string
+# def preprocess_data(completion_string):
+#     # print(completion_string)
+#     if f"```python" in completion_string:
+#         completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
+#         completion_string = completion_string[:completion_string.find("```")]
+#     else:
+#         print("Error: No code block found")
+#     return completion_string
 
 def test_report(dataset,lg):
     correct = 0

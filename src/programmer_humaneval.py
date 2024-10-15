@@ -5,7 +5,7 @@ from tqdm import tqdm
 import copy
 import openai
 from openai import OpenAI
-from constant_value import API_KEY, parse_args
+from constant_value import API_KEY, parse_args, preprocess_data
 import argparse
 
 # client = OpenAI(api_key=API_KEY)
@@ -24,14 +24,14 @@ prompt_path = "prompts/humaneval_prompt_update.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
-def preprocess_data(completion_string):
-    # print(completion_string)
-    if f"```python" in completion_string:
-        completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
-        completion_string = completion_string[:completion_string.find("```")]
-    else:
-        print("Error: No code block found")
-    return completion_string
+# def preprocess_data(completion_string):
+#     # print(completion_string)
+#     if f"```python" in completion_string:
+#         completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
+#         completion_string = completion_string[:completion_string.find("```")]
+#     else:
+#         print("Error: No code block found")
+#     return completion_string
 
 # Function to fetch completion
 def fetch_completion(data_entry, model,lg,times = 1, api_dict=None):
