@@ -249,8 +249,10 @@ def test_agent_concurrency(dataset, lg):
         result_list = []
         for j in range(len(completion_list)):
             correct = 0
+            result = None
             if f"def {dataset[i]['entry_point']}" not in completion_list[j]:
                 correct_list.append(correct)
+                result_list.append(f"NameError: name '{dataset[i]['entry_point']}' is not defined")
                 continue
             for k in range(len(test_case_list)):
                 if f"assert {dataset[i]['entry_point']}(" not in test_case_list[k]:
@@ -261,7 +263,10 @@ def test_agent_concurrency(dataset, lg):
                 # print(f"result: {result}")
                 if result["passed"]:
                     correct += 1
-            result_list.append(result['result'])
+            if not result:
+                result_list.append("Error: AssertionError")
+            else:
+                result_list.append(result['result'])
             correct_list.append(correct)
 
         max_correct = max(correct_list)
@@ -275,7 +280,7 @@ def test_agent_concurrency(dataset, lg):
 
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset)):
             max_correct, idx, result = future.result()
-            if max_correct >= np.ceil(len(dataset[i]["test_case_list"]) * 0.6): # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
+            if max_correct >= 3: # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
                 dataset[i]["need_reproduce"] = False
