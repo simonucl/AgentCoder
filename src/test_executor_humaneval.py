@@ -211,13 +211,14 @@ def test_agent_concurrency(dataset, lg):
                 dataset[i]["full_code"] = test_setup + "\n" + completion_list[j] + "\n" + test_case_list[k]
                 dataset[i]["completion"] = completion_list[j]
                 result = check_correctness(dataset[i]["task_id"], dataset[i], lg, 3, "./tmp")
+                print(f"result: {result}")
                 if result["passed"]:
                     correct += 1
             correct_list.append(correct)
 
         max_correct = max(correct_list)
         idx = correct_list.index(max_correct)
-
+        print(f"max_correct: {max_correct}, idx: {idx}")
         return max_correct, idx
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -233,10 +234,11 @@ def test_agent_concurrency(dataset, lg):
                 dataset[i]["max_correct"] = max_correct
                 _for_completion += 1
             else:
+                print(f"max_correct: {max_correct}, idx: {idx}")
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
 
-
+    # TODO: fix why both are zero
     print("==============Start Agent Testing==============")
     print(f"test_report: {(total_correct/len(dataset)*100):.1f}")
     print(f"test_for_completion: {(_for_completion/len(dataset)*100):.1f}")
