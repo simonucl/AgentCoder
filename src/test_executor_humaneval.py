@@ -25,6 +25,8 @@ from codegeex.benchmark.utils import read_dataset, IMPORT_HELPER
 from codegeex.benchmark.execution import check_correctness
 import tempfile
 from constant_value import parse_args
+import openai
+import copy
 correct_doctest = 0
 correct_before_doctest = 0
 correct_after_doctest = 0
@@ -185,7 +187,51 @@ def test_report(dataset,lg):
     print("==============Start Report Testing==============")
     print(f"test_report: {(correct/len(dataset)*100):.1f}")
 
+def fix_bug(data_entry, model,lg, api_dict=None):
+    if "passed" in data_entry.keys() and data_entry["passed"] == True:
+        return data_entry
+    else:
+        gpt_prompt = (
+            "Please re-completion the code to fix the error message. "+
+            f"\nHere is the previous version:\n```{lg}\n" + 
+            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry["test_case"]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
+            f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
+        )
+        if api_dict:
+            client = openai.OpenAI(
+                base_url=api_dict['base_url'],
+                api_key=api_dict['api_key']
+            )
+        else:
+            client = openai.OpenAI()
+        try:
+            completions = client.chat.completions.create(
+                model = model,
+                messages=[
+            {"role": "system", "content": "You are a code developer assistant."},
+            {"role": "user", "content":gpt_prompt},
+                ],
+                request_timeout=100,
+            )
+            data_entry["completion"] = completions.choices[0]["message"]["content"]
+            data_entry = preprocess_data(data_entry,lg)
+        except Exception as e:
+            print(repr(e))
+    return data_entry
 
+def call_fix_bug(dataset, model,lg, api_dict=None):
+    print("Fixing bug...")
+    with ThreadPoolExecutor() as executor:
+        future_to_entry = {executor.submit(fix_bug, copy.deepcopy(entry), model, lg, api_dict=api_dict): entry for entry in tqdm(dataset)}
+        for future in tqdm(concurrent.futures.as_completed(future_to_entry)):
+            entry = future_to_entry[future]
+            try:
+                updated_entry = future.result()
+                idx = dataset.index(entry)
+                dataset[idx] = updated_entry
+            except Exception as e:
+                print(repr(e))
+    return dataset
 
 def test_agent_concurrency(dataset, lg):
     test_setup = "\n".join(IMPORT_HELPER["python"]) + "\n"
@@ -211,14 +257,14 @@ def test_agent_concurrency(dataset, lg):
                 dataset[i]["full_code"] = test_setup + "\n" + completion_list[j] + "\n" + test_case_list[k]
                 dataset[i]["completion"] = completion_list[j]
                 result = check_correctness(dataset[i]["task_id"], dataset[i], lg, 3, "./tmp")
-                print(f"result: {result}")
+                # print(f"result: {result}")
                 if result["passed"]:
                     correct += 1
             correct_list.append(correct)
 
         max_correct = max(correct_list)
         idx = correct_list.index(max_correct)
-        print(f"max_correct: {max_correct}, idx: {idx}")
+        # print(f"max_correct: {max_correct}, idx: {idx}")
         return max_correct, idx
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -234,7 +280,7 @@ def test_agent_concurrency(dataset, lg):
                 dataset[i]["max_correct"] = max_correct
                 _for_completion += 1
             else:
-                print(f"max_correct: {max_correct}, idx: {idx}")
+                # print(f"max_correct: {max_correct}, idx: {idx}")
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
 
@@ -263,9 +309,10 @@ if __name__ == "__main__":
     for current_epoch in range(epoch):
         dataset = test_agent_concurrency(dataset,lg)
         test_report(dataset,lg)
-        dataset = call_fetch_completion_helper(dataset,model,lg, api_dict=api_dict)
-        dataset = call_fetch_test_completion_helper(dataset,model,lg, api_dict=api_dict)
+        # dataset = call_fetch_completion_helper(dataset,model,lg, api_dict=api_dict)
+        # dataset = call_fetch_test_completion_helper(dataset,model,lg, api_dict=api_dict)
         with open(f"dataset/{model.replace('/', '__')}_{current_epoch}.json", "w") as f:
             json.dump(dataset, f, indent=4)
+        dataset = call_fix_bug(dataset,model,lg, api_dict=api_dict)
     dataset = test_agent_concurrency(dataset,lg)
     test_report(dataset,lg)
