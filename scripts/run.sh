@@ -37,8 +37,10 @@ python3 src/programmer_humaneval.py \
   --times 5
 
 python3 src/test_designer_humaneval.py \
-  --model gpt-4o-mini \
+  --model $MODEL_PATH \
   --language python \
+  --base_url http://0.0.0.0:8000/v1 \
+  --api_key token-abc123 \
   --exp_name $EXP_NAME
 
 python3 src/test_executor_humaneval.py \
@@ -48,7 +50,7 @@ python3 src/test_executor_humaneval.py \
   --api_key token-abc123 \
   --exp_name $EXP_NAME \
   --times 5
-  
+
 # pkill -f sglang
 # pkill -f multiprocessing
 # pkill -f vllm
