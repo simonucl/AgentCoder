@@ -195,7 +195,7 @@ def fix_bug(data_entry, model,lg, api_dict=None):
         gpt_prompt = (
             "Please re-completion the code to fix the error message. "+
             f"\nHere is the previous version:\n```{lg}\n" + 
-            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry["test_case_list"][0]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
+            data_entry['completion'] + f"\n```\nWhen we use this test cases: ```{lg}\n"+data_entry['test_case_list'][0]+f"\n``` to evaluate the code. It raise the error:\n```{lg}\n" + data_entry["result"] +
             f"\n```\nPlease fix the bug and return the code. The re-completion code should in triple backticks format(i.e., in ```{lg} ```)."
         )
         if api_dict:
@@ -279,17 +279,17 @@ def test_agent_concurrency(dataset, lg):
 
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset)):
             max_correct, idx, result = future.result()
-            if max_correct >= 3: # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
-                i = futures.index(future)
+            i = futures.index(future)
+            if max_correct >= np.ceil(len(dataset[i]["test_case_list"]) * 0.6): # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
                 dataset[i]["need_reproduce"] = False
                 dataset[i]["idx"] = idx
                 dataset[i]["max_correct"] = max_correct
                 dataset[i]["result"] = result
                 _for_completion += 1
+                total_correct += 1
             else:
                 # print(f"max_correct: {max_correct}, idx: {idx}")
-                i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
                 dataset[i]["result"] = result
     # TODO: fix why both are zero
