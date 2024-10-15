@@ -212,7 +212,6 @@ def fix_bug(data_entry, model,lg, api_dict=None):
             {"role": "system", "content": "You are a code developer assistant."},
             {"role": "user", "content":gpt_prompt},
                 ],
-                request_timeout=100,
             )
             data_entry["completion"] = completions.choices[0]["message"]["content"]
             data_entry = preprocess_data(data_entry,lg)
