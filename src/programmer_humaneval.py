@@ -20,7 +20,7 @@ from datasets import load_dataset
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
 
-prompt_path = "prompts/humaneval_prompt_update.txt"
+prompt_path = "prompts/humaneval_prompt.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
@@ -65,7 +65,10 @@ def fetch_completion(data_entry, model,lg,times = 1, api_dict=None):
                 messages=[
                                 {"role": "system", "content": "You are a software programmer."},
                                 {"role": "user", "content":text},
-                ])
+                ],
+                top_p=0.95,
+                temperature=0.8
+                )
                 completion = completions.choices[0].message.content
                 completion = preprocess_data(completion)
 

@@ -17,7 +17,7 @@ from constant_value import parse_args, preprocess_data
 dataset = load_dataset("openai_humaneval",split="test")
 dataset = [entry for entry in dataset]
 
-prompt_path = "prompts/test_designer_humaneval_prompt_update.txt"
+prompt_path = "prompts/test_designer_humaneval_prompt.txt"
 with open(prompt_path, "r") as f:
     construct_few_shot_prompt = f.read()
 
