@@ -154,25 +154,32 @@ def process_humaneval_test(sample, problems, example_test=False,language=languag
 
 
 
-def preprocess_data(task,lg):
-    if f"```{lg}" in task["completion"]:
-        task["completion"] = task["completion"][task["completion"].find(f"```{lg}") +len(f"```{lg}"):]
-        task["completion"] = task["completion"][:task["completion"].find("```")]
-    elif "```" in task["completion"]:
-        task["completion"] = task["completion"][task["completion"].find("```") +3:]
-        task["completion"] = task["completion"][:task["completion"].find("```")]
+# def preprocess_data(task,lg):
+#     if f"```{lg}" in task["completion"]:
+#         task["completion"] = task["completion"][task["completion"].find(f"```{lg}") +len(f"```{lg}"):]
+#         task["completion"] = task["completion"][:task["completion"].find("```")]
+#     elif "```" in task["completion"]:
+#         task["completion"] = task["completion"][task["completion"].find("```") +3:]
+#         task["completion"] = task["completion"][:task["completion"].find("```")]
 
-    if f"```{lg}" in task["prompt"]:
-        task["prompt"] = task["prompt"][task["prompt"].find(f"```{lg}") +len(f"```{lg}"):]
-        task["prompt"] = task["prompt"][:task["prompt"].find("```")]
-    elif "```" in task["prompt"]:
-        task["prompt"] = task["prompt"][task["prompt"].find("```") +3:]
-        task["prompt"] = task["prompt"][:task["prompt"].find("```")]
+#     if f"```{lg}" in task["prompt"]:
+#         task["prompt"] = task["prompt"][task["prompt"].find(f"```{lg}") +len(f"```{lg}"):]
+#         task["prompt"] = task["prompt"][:task["prompt"].find("```")]
+#     elif "```" in task["prompt"]:
+#         task["prompt"] = task["prompt"][task["prompt"].find("```") +3:]
+#         task["prompt"] = task["prompt"][:task["prompt"].find("```")]
 
-    if "assert" in task["prompt"]:
-        task["prompt"] = task["prompt"][:task["prompt"].find("assert")]
-    return task
-                
+#     if "assert" in task["prompt"]:
+#         task["prompt"] = task["prompt"][:task["prompt"].find("assert")]
+#     return task
+def preprocess_data(completion_string):
+    # print(completion_string)
+    if f"```python" in completion_string:
+        completion_string = completion_string[completion_string.find(f"```python")+len(f"```python"):]
+        completion_string = completion_string[:completion_string.find("```")]
+    else:
+        print("Error: No code block found")
+    return completion_string
 
 def test_report(dataset,lg):
     correct = 0
@@ -213,10 +220,11 @@ def fix_bug(data_entry, model,lg, api_dict=None):
             {"role": "user", "content":gpt_prompt},
                 ],
             )
-            data_entry["completion"] = completions.choices[0].message.content
-            data_entry = preprocess_data(data_entry,lg)
+            completion = completions.choices[0].message.content
+            completion = preprocess_data(completion)
         except Exception as e:
             print(repr(e))
+    data_entry["completion_list"].append(completion)
     return data_entry
 
 def call_fix_bug(dataset, model,lg, api_dict=None):
