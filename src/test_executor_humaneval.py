@@ -27,6 +27,7 @@ import tempfile
 from constant_value import API_KEY, parse_args
 import openai
 import copy
+import numpy as np
 correct_doctest = 0
 correct_before_doctest = 0
 correct_after_doctest = 0
@@ -274,7 +275,7 @@ def test_agent_concurrency(dataset, lg):
 
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(dataset)):
             max_correct, idx, result = future.result()
-            if max_correct >= 6: # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
+            if max_correct >= np.ceil(len(dataset[i]["test_case_list"]) * 0.6): # GPT-3.5-turbo-1106's test case accuracy is about 67%. So we choice 60% as the bar.
                 i = futures.index(future)
                 dataset[i]["completion"] = dataset[i]["completion_list"][idx]
                 dataset[i]["need_reproduce"] = False
