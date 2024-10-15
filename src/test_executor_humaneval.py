@@ -213,7 +213,7 @@ def fix_bug(data_entry, model,lg, api_dict=None):
             {"role": "user", "content":gpt_prompt},
                 ],
             )
-            data_entry["completion"] = completions.choices[0]["message"]["content"]
+            data_entry["completion"] = completions.choices[0].message.content
             data_entry = preprocess_data(data_entry,lg)
         except Exception as e:
             print(repr(e))
@@ -241,7 +241,7 @@ def test_agent_concurrency(dataset, lg):
     def process_item(i):
         if "need_reproduce" in dataset[i].keys() and dataset[i]["need_reproduce"]==False:
             # dataset[i]["need_reproduce"] = True
-            return dataset[i]["max_correct"], dataset[i]["idx"]
+            return dataset[i]["max_correct"], dataset[i]["idx"], dataset[i]["result"]
         completion_list = dataset[i]["completion_list"]
         test_case_list = dataset[i]["test_case_list"]
         correct_list = []
