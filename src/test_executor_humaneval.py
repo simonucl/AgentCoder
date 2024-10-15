@@ -196,7 +196,7 @@ def test_report(dataset,lg):
     print(f"test_report: {(correct/len(dataset)*100):.1f}")
 
 def fix_bug(data_entry, model,lg, api_dict=None):
-    if "passed" in data_entry.keys() and data_entry["passed"] == True:
+    if "need_reproduce" in data_entry.keys() and data_entry["need_reproduce"]==False:
         return data_entry
     else:
         gpt_prompt = (
