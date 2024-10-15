@@ -12,4 +12,5 @@ def parse_args():
     parser.add_argument("--language", type=str, default="python")
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--api_key", type=str, default=None)
+    parser.add_argument("--exp_name", type=str, required=True)
     return parser.parse_args()

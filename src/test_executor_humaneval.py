@@ -313,12 +313,13 @@ if __name__ == "__main__":
     lg = args.language
     base_url = args.base_url
     api_key = args.api_key
+    exp_name = args.exp_name
     if base_url and api_key:
         api_dict = {"base_url": base_url, "api_key": api_key}
     else:
         api_dict = None
     # path = f"./dataset/{model}_{lg}.json"
-    path = f"dataset/{model.replace('/', '__')}.json"
+    path = f"dataset/{exp_name}.json"
     with open(path, "r") as f:
         dataset = json.load(f)
     epoch = 5
@@ -327,7 +328,7 @@ if __name__ == "__main__":
         test_report(dataset,lg)
         # dataset = call_fetch_completion_helper(dataset,model,lg, api_dict=api_dict)
         # dataset = call_fetch_test_completion_helper(dataset,model,lg, api_dict=api_dict)
-        with open(f"dataset/{model.replace('/', '__')}_{current_epoch}.json", "w") as f:
+        with open(f"dataset/{exp_name}_{current_epoch}.json", "w") as f:
             json.dump(dataset, f, indent=4)
         dataset = call_fix_bug(dataset,model,lg, api_dict=api_dict)
     dataset = test_agent_concurrency(dataset,lg)

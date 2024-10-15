@@ -100,6 +100,7 @@ if __name__ == "__main__":
     lg = args.language
     base_url = args.base_url
     api_key = args.api_key
+    exp_name = args.exp_name
     if base_url and api_key:
         api_dict = {"base_url": base_url, "api_key": api_key}
     else:
@@ -124,5 +125,5 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"An unexpected error occurred: {repr(e)}")
     # with open(f"./dataset/{model}_{lg}.json", "w") as f:
-    with open(f"dataset/{model.replace('/', '__')}.json", "w") as f:
+    with open(f"dataset/{exp_name}.json", "w") as f:
         json.dump(dataset, f, indent=4)
